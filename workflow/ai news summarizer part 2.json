@@ -1,0 +1,284 @@
+{
+  "name": "ai news summarizer part 2",
+  "nodes": [
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        752,
+        416
+      ],
+      "id": "ef4b1795-dd8b-4186-b4f5-33d27e882a92",
+      "name": "Google Gemini Chat Model"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.data }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are an AI newsletter assistant creating a daily intelligence report.\nAnalyze RSS feeds and event data to create:\n\nAI NEWS HIGHLIGHTS\n\n[5 most important AI developments]\n\nTECHNOLOGY UPDATES\n==================\n[Latest tech developments]\n\nUPCOMING AI EVENTS\n\n[List events with date, location, description]\nIf no events found: \"No AI events scheduled this week\"\n\nFormat each news item:\n- Headline in ALL CAPS\n- 2-3 sentence summary\n- Article link\n\nSign off as \"Your AI Intelligence Team\"\n"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        672,
+        192
+      ],
+      "id": "17e53d2a-81fd-4712-a21a-7840269f7559",
+      "name": "AI Summarization Model"
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        224,
+        176
+      ],
+      "id": "8184a5b9-9583-4215-ae64-d6c78509ec43",
+      "name": "Data Merger"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        448,
+        192
+      ],
+      "id": "a4e41e33-7634-4c2a-98d1-04141c3d9602",
+      "name": "Data Aggregator"
+    },
+    {
+      "parameters": {
+        "sendTo": "RECIEVER_EMAIL_ID",
+        "subject": "Today's AI News for you...",
+        "emailType": "text",
+        "message": "={{ $json.text }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1024,
+        192
+      ],
+      "id": "1f692df9-2dfa-4354-8ecc-751d45e73735",
+      "name": "Email Sender",
+      "webhookId": "7136733c-6b4b-43f2-8120-4196a3996cf4"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 10
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -224,
+        192
+      ],
+      "id": "82d5cd1a-2db9-4bc6-ba32-5a54b94454ed",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://www.normaltech.ai/feed",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "f2df5d20-32af-4718-ad9a-a5bf696e4c5a",
+      "name": "NormalTech"
+    },
+    {
+      "parameters": {
+        "url": "https://aibusiness.com/rss.xml",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        192
+      ],
+      "id": "1bbeee0d-be03-4947-9400-897ec7b48c03",
+      "name": "AIBusiness"
+    },
+    {
+      "parameters": {
+        "url": "https://serpapi.com/search",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "engine",
+              "value": "google_events"
+            },
+            {
+              "name": "q",
+              "value": "AI Tech Events in india"
+            },
+            {
+              "name": "hl",
+              "value": "en"
+            },
+            {
+              "name": "gl",
+              "value": "us"
+            },
+            {
+              "name": "api_key",
+              "value": "YOUR_API_KEY"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        384
+      ],
+      "id": "00c94141-ab96-4ea2-90bc-c0fb4c858b11",
+      "name": "Fetch Events"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Summarization Model",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Summarization Model": {
+      "main": [
+        [
+          {
+            "node": "Email Sender",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data Merger": {
+      "main": [
+        [
+          {
+            "node": "Data Aggregator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data Aggregator": {
+      "main": [
+        [
+          {
+            "node": "AI Summarization Model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "NormalTech",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "AIBusiness",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "NormalTech": {
+      "main": [
+        [
+          {
+            "node": "Data Merger",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AIBusiness": {
+      "main": [
+        [
+          {
+            "node": "Data Merger",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Fetch Events": {
+      "main": [
+        [
+          {
+            "node": "Data Merger",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "5760ff10-5fd7-4530-9532-7d010075afd8",
+  "meta": {
+    "instanceId": "969257b09ad2942bbaff2e2288304f4969030574d109cdeca05bf11f630884df"
+  },
+  "id": "Rge35UakHChnl8kD",
+  "tags": []
+}
